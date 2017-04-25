@@ -18,7 +18,7 @@ public class MyContentProvider extends ContentProvider {
     //  - authority
         AUTHORITY = "com.example.samsung.p1011_contentprovider.AddressBook",
     //  - path
-        CONTACT_PATH = DB.getTableContact();
+        CONTACT_PATH = "contacts";
     //  - general uri
     public static final Uri CONTACT_CONTENT_URI = Uri.parse(
             "content://" + AUTHORITY + "/" + CONTACT_PATH
@@ -45,36 +45,37 @@ public class MyContentProvider extends ContentProvider {
         uriMatcher.addURI(AUTHORITY, CONTACT_PATH + "/#", URI_CONTACTS_ID);
     }
 
-    DB database;
+    private DB database;
 
     @Override
-    public int delete(Uri uri, String selection, String[] selectionArgs) {
-        String message = "MyContentProvider delete(): " + uri.toString();
+    public boolean onCreate() {
+        String message = "MyContentProvider onCreate()";
         Messager.sendMessageToAllRecipients(getContext(), message);
-
-        switch (uriMatcher.match(uri)) {
-
-            case URI_CONTACTS :
-                message = "-------------------------> URI_CONTACTS";
-                Messager.sendMessageToAllRecipients(getContext(), message);
-                break;
-            case URI_CONTACTS_ID :
-                String id = uri.getLastPathSegment();
-                message = "-------------------------> URI_CONTACTS_ID = " + id;
-                Messager.sendMessageToAllRecipients(getContext(), message);
-                if (TextUtils.isEmpty(selection)) {
-                    selection = DB.getTableId() + " = " + id;
-                } else {
-                    selection += (" AND " + DB.getTableId() + " = " + id);
-                }
-                break;
-            default:
-                throw new IllegalArgumentException(getContext().getString(R.string.wrong_uri_) + uri);
+        if (database == null) {
+            database = new DB(getContext());
         }
-        if (database == null) database = new DB(getContext());
-        int cnt = database.getDataBase().delete(DB.getTableContact(), selection, selectionArgs);
-        getContext().getContentResolver().notifyChange(uri, null);
-        return cnt;
+        database.openDB();
+        database.closeDb();
+        return true;
+    }
+
+    @Override
+    public Uri insert(Uri uri, ContentValues values) {
+        String message = "MyContentProvider insert(): " + uri.toString();
+        Messager.sendMessageToAllRecipients(getContext(), message);
+        if (uriMatcher.match(uri) != URI_CONTACTS) {
+            throw new IllegalArgumentException(getContext().getString(R.string.wrong_uri_) + uri);
+        }
+        if (database == null) {
+            database = new DB(getContext());
+        }
+        database.openDB();
+        long rowID = database.insert(values);
+        Uri resultUri = ContentUris.withAppendedId(CONTACT_CONTENT_URI, rowID);
+        //notification
+        getContext().getContentResolver().notifyChange(resultUri, null);
+        database.closeDb();
+        return resultUri;
     }
 
     @Override
@@ -90,29 +91,6 @@ public class MyContentProvider extends ContentProvider {
                 return CONTACT_CONTENT_ITEM_TYPE;
         }
         return null;
-    }
-
-    @Override
-    public Uri insert(Uri uri, ContentValues values) {
-        String message = "MyContentProvider insert(): " + uri.toString();
-        Messager.sendMessageToAllRecipients(getContext(), message);
-        if (uriMatcher.match(uri) != URI_CONTACTS) {
-            throw new IllegalArgumentException(getContext().getString(R.string.wrong_uri_) + uri);
-        }
-        if (database == null) database = new DB(getContext());
-        long rowID = database.getDataBase().insert(DB.getTableContact(), null, values);
-        Uri resultUri = ContentUris.withAppendedId(CONTACT_CONTENT_URI, rowID);
-        //notification
-        getContext().getContentResolver().notifyChange(resultUri, null);
-        return resultUri;
-    }
-
-    @Override
-    public boolean onCreate() {
-        String message = "MyContentProvider onCreate()";
-        Messager.sendMessageToAllRecipients(getContext(), message);
-        if (database == null) database = new DB(getContext());
-        return true;
     }
 
     @Override
@@ -146,11 +124,15 @@ public class MyContentProvider extends ContentProvider {
                 throw new IllegalArgumentException(getContext().getString(R.string.wrong_uri_) + uri);
         }
 
-        if (database == null) database = new DB(getContext());
-        Cursor cursor = database.getDataBase().query(DB.getTableContact(), projection, selection,
-                selectionArgs, null, null, sortOrder);
+        if (database == null) {
+            database = new DB(getContext());
+        }
+        database.openDB();
+        Cursor cursor = database.query(projection, selection,
+                selectionArgs, sortOrder);
         //включение для курсора режима уведомления об изменениях данных в CONTACT_CONTENT_URI
         cursor.setNotificationUri(getContext().getContentResolver(), CONTACT_CONTENT_URI);
+        database.closeDb();
         return cursor;
     }
 
@@ -180,9 +162,47 @@ public class MyContentProvider extends ContentProvider {
             default:
                 throw new IllegalArgumentException(getContext().getString(R.string.wrong_uri_) + uri);
         }
-        if (database == null) database = new DB(getContext());
-        int cnt = database.getDataBase().update(DB.getTableContact(), values, selection, selectionArgs);
+        if (database == null) {
+            database = new DB(getContext());
+        }
+        database.openDB();
+        int cnt = database.update(values, selection, selectionArgs);
         getContext().getContentResolver().notifyChange(uri, null);
+        database.closeDb();
+        return cnt;
+    }
+
+    @Override
+    public int delete(Uri uri, String selection, String[] selectionArgs) {
+        String message = "MyContentProvider delete(): " + uri.toString();
+        Messager.sendMessageToAllRecipients(getContext(), message);
+
+        switch (uriMatcher.match(uri)) {
+
+            case URI_CONTACTS :
+                message = "-------------------------> URI_CONTACTS";
+                Messager.sendMessageToAllRecipients(getContext(), message);
+                break;
+            case URI_CONTACTS_ID :
+                String id = uri.getLastPathSegment();
+                message = "-------------------------> URI_CONTACTS_ID = " + id;
+                Messager.sendMessageToAllRecipients(getContext(), message);
+                if (TextUtils.isEmpty(selection)) {
+                    selection = DB.getTableId() + " = " + id;
+                } else {
+                    selection += (" AND " + DB.getTableId() + " = " + id);
+                }
+                break;
+            default:
+                throw new IllegalArgumentException(getContext().getString(R.string.wrong_uri_) + uri);
+        }
+        if (database == null) {
+            database = new DB(getContext());
+        }
+        database.openDB();
+        int cnt = database.delete(selection, selectionArgs);
+        getContext().getContentResolver().notifyChange(uri, null);
+        database.closeDb();
         return cnt;
     }
 }

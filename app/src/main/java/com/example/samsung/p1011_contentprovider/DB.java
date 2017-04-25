@@ -2,6 +2,7 @@ package com.example.samsung.p1011_contentprovider;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
@@ -21,28 +22,46 @@ public class DB {
                     + TABLE_ID + " integer primary key autoincrement, "
                     + TABLE_NAME + " text, " + TABLE_EMAIL + " text" + ");";
     private final int DB_VERSION = 1;
-    DBHelper dbHelper;
-    SQLiteDatabase database;
+    private Context mCtx;
+    private DBHelper mDBHelper;
+    private SQLiteDatabase mDatabase;
 
-    public DB(Context context) {
-        dbHelper = new DBHelper(context);
-        database = dbHelper.getWritableDatabase();
+    DB(Context context) {
+        mCtx = context;
     }
 
-    public static String getTableContact() {
-        return TABLE_CONTACT;
-    }
-
-    public static String getTableId() {
+    static String getTableId() {
         return TABLE_ID;
     }
 
-    public static String getTableName() {
+    static String getTableName() {
         return TABLE_NAME;
     }
 
-    public SQLiteDatabase getDataBase() {
-        return database;
+    public void openDB() {
+        mDBHelper = new DBHelper(mCtx);
+        mDatabase = mDBHelper.getWritableDatabase();
+    }
+
+    public long insert(ContentValues values) {
+        return mDatabase.insert(TABLE_CONTACT, null, values);
+    }
+
+    public void closeDb() {
+        if (mDBHelper != null) mDBHelper.close();
+    }
+
+    public Cursor query(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        return mDatabase.query(TABLE_CONTACT, projection, selection,
+                selectionArgs, null, null, sortOrder);
+    }
+
+    public int update(ContentValues values, String selection, String[] selectionArgs) {
+        return mDatabase.update(TABLE_CONTACT, values, selection, selectionArgs);
+    }
+
+    public int delete(String selection, String[] selectionArgs) {
+        return mDatabase.delete(TABLE_CONTACT, selection, selectionArgs);
     }
 
     private class DBHelper extends SQLiteOpenHelper {
@@ -53,12 +72,18 @@ public class DB {
 
         @Override
         public void onCreate(SQLiteDatabase db) {
-            db.execSQL(DB_CREATE);
-            ContentValues contentValues = new ContentValues();
-            for (int i = 1; i < 5; i++) {
-                contentValues.put(TABLE_NAME, "name " + i);
-                contentValues.put(TABLE_EMAIL, "email" + i + "@example.com");
-                db.insert(TABLE_CONTACT, null, contentValues);
+            db.beginTransaction();
+            try {
+                db.execSQL(DB_CREATE);
+                ContentValues contentValues = new ContentValues();
+                for (int i = 1; i < 5; i++) {
+                    contentValues.put(TABLE_NAME, "name " + i);
+                    contentValues.put(TABLE_EMAIL, "email" + i + "@example.com");
+                    db.insert(TABLE_CONTACT, null, contentValues);
+                }
+                db.setTransactionSuccessful();
+            } finally {
+                db.endTransaction();
             }
         }
 
