@@ -11,29 +11,22 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class DB {
 
-    private final int DB_VERSION = 1;
     private static final String
-                        DB_NAME        = "address_book",
-                        TABLE_CONTACT   = "contacts",
-                        TABLE_ID        = "_id",
-                        TABLE_NAME      = "name",
-                        TABLE_EMAIL     = "email",
-    DB_CREATE = "create table " + TABLE_CONTACT + "("
-            + TABLE_ID + " integer primary key autoincrement, "
-            + TABLE_NAME + " text, " + TABLE_EMAIL + " text" + ");";
-
+            DB_NAME = "address_book",
+            TABLE_CONTACT = "contacts",
+            TABLE_ID = "_id",
+            TABLE_NAME = "name",
+            TABLE_EMAIL = "email",
+            DB_CREATE = "create table " + TABLE_CONTACT + "("
+                    + TABLE_ID + " integer primary key autoincrement, "
+                    + TABLE_NAME + " text, " + TABLE_EMAIL + " text" + ");";
+    private final int DB_VERSION = 1;
     DBHelper dbHelper;
     SQLiteDatabase database;
 
     public DB(Context context) {
-        if (database == null) {
-            dbHelper = new DBHelper(context);
-            database = dbHelper.getWritableDatabase();
-        }
-    }
-
-    public SQLiteDatabase getDataBase() {
-        return database;
+        dbHelper = new DBHelper(context);
+        database = dbHelper.getWritableDatabase();
     }
 
     public static String getTableContact() {
@@ -46,6 +39,10 @@ public class DB {
 
     public static String getTableName() {
         return TABLE_NAME;
+    }
+
+    public SQLiteDatabase getDataBase() {
+        return database;
     }
 
     private class DBHelper extends SQLiteOpenHelper {
