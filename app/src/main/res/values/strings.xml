@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">P1011_ContentProvider</string>
+    <string name="wrong_uri_">Wrong URI:</string>
+</resources>
