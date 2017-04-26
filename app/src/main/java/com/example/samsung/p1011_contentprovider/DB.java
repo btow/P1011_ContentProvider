@@ -28,24 +28,18 @@ public class DB {
 
     DB(Context context) {
         mCtx = context;
+        mDBHelper = new DBHelper(mCtx);
     }
 
-    static String getTableId() {
-        return TABLE_ID;
-    }
+    static String getTableId() { return TABLE_ID; }
 
     static String getTableName() {
         return TABLE_NAME;
     }
 
-    public void openDB() {
-        mDBHelper = new DBHelper(mCtx);
-        mDatabase = mDBHelper.getWritableDatabase();
-    }
+    public void openDB() { mDatabase = mDBHelper.getWritableDatabase(); }
 
-    public long insert(ContentValues values) {
-        return mDatabase.insert(TABLE_CONTACT, null, values);
-    }
+    public long insert(ContentValues values) { return mDatabase.insert(TABLE_CONTACT, null, values); }
 
     public void closeDb() {
         if (mDBHelper != null) mDBHelper.close();

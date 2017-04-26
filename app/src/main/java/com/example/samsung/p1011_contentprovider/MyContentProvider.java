@@ -54,43 +54,7 @@ public class MyContentProvider extends ContentProvider {
         if (database == null) {
             database = new DB(getContext());
         }
-        database.openDB();
-        database.closeDb();
         return true;
-    }
-
-    @Override
-    public Uri insert(Uri uri, ContentValues values) {
-        String message = "MyContentProvider insert(): " + uri.toString();
-        Messager.sendMessageToAllRecipients(getContext(), message);
-        if (uriMatcher.match(uri) != URI_CONTACTS) {
-            throw new IllegalArgumentException(getContext().getString(R.string.wrong_uri_) + uri);
-        }
-        if (database == null) {
-            database = new DB(getContext());
-        }
-        database.openDB();
-        long rowID = database.insert(values);
-        Uri resultUri = ContentUris.withAppendedId(CONTACT_CONTENT_URI, rowID);
-        //notification
-        getContext().getContentResolver().notifyChange(resultUri, null);
-        database.closeDb();
-        return resultUri;
-    }
-
-    @Override
-    public String getType(Uri uri) {
-        String message = "MyContentProvider getType(): " + uri.toString();
-        Messager.sendMessageToAllRecipients(getContext(), message);
-
-        switch (uriMatcher.match(uri)) {
-
-            case URI_CONTACTS :
-                return CONTACT_CONTENT_TYPE;
-            case URI_CONTACTS_ID :
-                return CONTACT_CONTENT_ITEM_TYPE;
-        }
-        return null;
     }
 
     @Override
@@ -134,6 +98,40 @@ public class MyContentProvider extends ContentProvider {
         cursor.setNotificationUri(getContext().getContentResolver(), CONTACT_CONTENT_URI);
         database.closeDb();
         return cursor;
+    }
+
+    @Override
+    public Uri insert(Uri uri, ContentValues values) {
+        String message = "MyContentProvider insert(): " + uri.toString();
+        Messager.sendMessageToAllRecipients(getContext(), message);
+        if (uriMatcher.match(uri) != URI_CONTACTS) {
+            throw new IllegalArgumentException(getContext().getString(R.string.wrong_uri_) + uri);
+        }
+        if (database == null) {
+            database = new DB(getContext());
+        }
+        database.openDB();
+        long rowID = database.insert(values);
+        Uri resultUri = ContentUris.withAppendedId(CONTACT_CONTENT_URI, rowID);
+        //notification
+        getContext().getContentResolver().notifyChange(resultUri, null);
+        database.closeDb();
+        return resultUri;
+    }
+
+    @Override
+    public String getType(Uri uri) {
+        String message = "MyContentProvider getType(): " + uri.toString();
+        Messager.sendMessageToAllRecipients(getContext(), message);
+
+        switch (uriMatcher.match(uri)) {
+
+            case URI_CONTACTS :
+                return CONTACT_CONTENT_TYPE;
+            case URI_CONTACTS_ID :
+                return CONTACT_CONTENT_ITEM_TYPE;
+        }
+        return null;
     }
 
     @Override
